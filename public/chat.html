@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chat</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="login"><form id="loginForm"><h1>Join the chat</h1>
+<input id="nameInput" maxlength="20" placeholder="Choose a name" autocomplete="off" autofocus>
+<button>Join</button><p id="err"></p></form></div>
+<div id="app" hidden>
+<aside><h2>Online <span id="count"></span></h2><ul id="users"></ul></aside>
+<main><header><span># general</span></header>
+<div id="messages"></div><div id="typing"></div>
+<form id="form"><input id="input" maxlength="1000" placeholder="Message #general" autocomplete="off"><button>Send</button></form>
+</main></div>
+<script src="/socket.io/socket.io.js"></script><script src="app.js"></script>
+</body></html>

@@ -1,0 +1,28 @@
+*{box-sizing:border-box}
+:root{--bg:#0f1117;--panel:#161922;--line:#262a37;--text:#e6e8ee;--mute:#8b90a0;--acc:#7c5cff}
+body{margin:0;height:100vh;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}
+[hidden]{display:none!important}
+#login{height:100%;display:grid;place-items:center}
+#loginForm{background:var(--panel);border:1px solid var(--line);padding:2rem;border-radius:14px;width:320px;display:flex;flex-direction:column;gap:.8rem}
+h1{margin:0 0 .4rem;font-size:1.3rem}
+input{background:var(--bg);border:1px solid var(--line);color:var(--text);padding:.7rem .9rem;border-radius:10px;font:inherit;outline:0}
+input:focus{border-color:var(--acc)}
+button{background:var(--acc);color:#fff;border:0;padding:.7rem 1.1rem;border-radius:10px;font:inherit;cursor:pointer;font-weight:600}
+button:hover{filter:brightness(1.1)}
+#err{color:#ff6b6b;margin:0;min-height:1em;font-size:.85rem}
+#app{height:100%;display:flex}
+aside{width:220px;background:var(--panel);border-right:1px solid var(--line);padding:1rem;overflow:auto}
+aside h2{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:0 0 .8rem}
+aside ul{list-style:none;margin:0;padding:0}
+aside li{padding:.25rem 0;display:flex;align-items:center;gap:.5rem}
+aside li:before{content:"";width:8px;height:8px;border-radius:50%;background:#3ddc84}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+header{padding:1rem 1.2rem;border-bottom:1px solid var(--line);font-weight:600}
+#messages{flex:1;overflow:auto;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.6rem}
+.msg{max-width:75%;background:var(--panel);border:1px solid var(--line);padding:.5rem .8rem;border-radius:12px;align-self:flex-start;word-wrap:break-word;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--acc);border-color:transparent}
+.meta{font-size:.75rem;color:var(--mute);margin-bottom:.1rem}.me .meta{color:#ddd6ff}
+.sys{align-self:center;color:var(--mute);font-size:.8rem}
+#typing{height:1.4rem;padding:0 1.2rem;color:var(--mute);font-size:.8rem}
+#form{display:flex;gap:.6rem;padding:0 1.2rem 1.2rem}#form input{flex:1}
+@media(max-width:640px){aside{display:none}.msg{max-width:90%}}

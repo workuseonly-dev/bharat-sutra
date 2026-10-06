@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Markets</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="dash.css"></head>
+<body class="dash">
+<nav><b>Markets</b>
+<button class="tab on" data-t="gold">🥇 Gold · Bhopal / Indore</button>
+<button class="tab" data-t="oil">🛢️ Crude Oil</button>
+<button class="tab" data-t="news">📰 News <span id="newsBadge" class="badge" hidden></span></button>
+<button class="tab" data-t="impact">🔗 News → Market Impact</button>
+<button class="tab" data-t="jobs">🎓 Govt Jobs &amp; Exams</button>
+<button class="tab" data-t="chat">💬 Chat</button>
+<span class="sp"></span><span id="status" class="mute">connecting…</span></nav>
+<section id="gold" class="pane">
+ <div class="cards">
+  <div class="card big"><div class="lbl">24K · per 10 g</div><div class="val" id="g24"></div><div id="gchg" class="chg"></div></div>
+  <div class="card"><div class="lbl">22K · per 10 g</div><div class="val sm" id="g22"></div></div>
+  <div class="card"><div class="lbl">24K · per 1 g</div><div class="val sm" id="g1"></div></div>
+  <div class="card"><div class="lbl">Spot gold (USD/oz)</div><div class="val sm" id="gusd"></div></div>
+  <div class="card"><div class="lbl">USD/INR</div><div class="val sm" id="gfx"></div></div>
+ </div>
+ <canvas id="gchart"></canvas>
+ <p class="mute note" id="gnote"></p>
+</section>
+<section id="oil" class="pane" hidden>
+ <div class="cards">
+  <div class="card big"><div class="lbl">WTI Crude · USD/bbl</div><div class="val" id="wti"></div><div id="wchg" class="chg"></div></div>
+  <div class="card big"><div class="lbl">Brent Crude · USD/bbl</div><div class="val" id="brent"></div><div id="bchg" class="chg"></div></div>
+  <div class="card"><div class="lbl">WTI in INR / bbl</div><div class="val sm" id="winr"></div></div>
+  <div class="card"><div class="lbl">Brent in INR / bbl</div><div class="val sm" id="binr"></div></div>
+ </div>
+ <canvas id="ochart"></canvas>
+ <p class="mute note">Lines: <span style="color:#f5a524">WTI</span> · <span style="color:#7c9cff">Brent</span> (futures, USD/bbl). Refreshes every 15 s; data from Yahoo Finance, may be delayed.</p>
+</section>
+<section id="news" class="pane" hidden>
+ <div class="subtabs" id="ncats"></div>
+ <div class="filters" id="nfilter">
+  <button class="chip on" data-k="all">All</button>
+  <button class="chip" data-k="top">📣 Headlines</button>
+  <button class="chip" data-k="radar">🔭 Under the radar</button>
+  <span class="mute" id="nstat"></span>
+ </div>
+ <div id="nlist"></div>
+ <p class="mute note">Live from public RSS feeds, refreshed every minute. Same story is shown once; other outlets covering it appear as “also”. “Under the radar” = important but less-covered sources (ReliefWeb, WHO, CIDRAP, PIB, Global Voices, Bellingcat, Rest of World, Phys.org, CS Monitor).</p>
+</section>
+<section id="impact" class="pane" hidden>
+ <div class="ticker" id="itick"></div>
+ <h2 class="sec">⚡ What moved the market? <span class="mute">(biggest unusual 30-min moves, last ~36 h, and the headlines just before)</span></h2>
+ <div id="imovers"></div>
+ <h2 class="sec">📰 Headlines & how markets reacted</h2>
+ <div class="subtabs" id="itags"></div>
+ <div class="filters"><span class="mute">Focus asset:</span><span id="isyms"></span>
+  <button class="chip" id="inotable">⭐ Notable moves only</button><span class="mute" id="istat"></span></div>
+ <div id="ilist"></div>
+ <p class="mute note">⚠️ <b>Correlation, not causation.</b> Each headline is matched by keywords (Trump/US policy, trade &amp; tariffs, India diplomacy, oil/OPEC, war, central banks, India economy, China). Reaction = price change from the moment the story was published to +30 min / +1 h / +3 h, measured on 5-min Yahoo Finance data. “Notable” (⭐) means the move was unusually large versus that asset’s normal volatility over the past 5 days (|z| ≥ 1.5). Several stories at the same time, scheduled data releases and thin trading all blur the picture — and futures markets are closed on weekends. For USD/INR, ▲ means the rupee got weaker. Not investment advice.</p>
+</section>
+<section id="jobs" class="pane" hidden>
+ <div class="subtabs" id="jcats"></div>
+ <div class="filters">
+  <button class="chip on" data-v="cal">📅 Exam calendar</button>
+  <button class="chip" data-v="feed">🔔 Latest notifications</button>
+  <input id="jsearch" class="search" placeholder="Search exams / notices…" autocomplete="off">
+  <span class="mute" id="jstat"></span>
+ </div>
+ <div class="filters" id="jtypes" hidden></div>
+ <div id="jlist"></div>
+ <p class="mute note">⚠️ <b>Calendar</b> shows the <i>typical</i> yearly cycle of each exam (approximate, auto-rolled to the next window) — it is NOT an official schedule; irregular exams have no fixed cycle. Always confirm on the official site. <b>Notifications</b> are live from public job-alert sites (refreshed every 5 min), with last date / exam date / vacancies picked out of the text where stated.</p>
+</section>
+<section id="chat" class="pane wide" hidden><iframe id="chatFrame" title="Chat"></iframe></section>
+<script src="/socket.io/socket.io.js"></script><script>document.querySelector('[data-t=chat]').addEventListener("click",()=>{const f=document.getElementById("chatFrame");if(!f.src)f.src="/chat.html"})</script><script src="dash.js"></script><script src="news.js"></script><script src="jobs.js"></script><script src="impact.js"></script>
+</body></html>
