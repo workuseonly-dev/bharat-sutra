@@ -9,7 +9,11 @@ app.get("/dashboard.html", (_q, r) => r.redirect("/"));
 app.use(express.static(__dirname + "/public"));
 
 const users = new Map(); // socket.id -> name
-const history = [];
+const db = require("./db");
+const history = db
+  .prepare("SELECT id, name, text, ts FROM chat ORDER BY ts DESC LIMIT 50")
+  .all()
+  .reverse();
 const names = () => [...users.values()];
 const clean = (s, n) => String(s || "").trim().slice(0, n);
 
@@ -37,6 +41,8 @@ io.on("connection", (socket) => {
     const msg = { id: Date.now() + Math.random(), name, text, ts: Date.now() };
     history.push(msg);
     if (history.length > 50) history.shift();
+    db.prepare("INSERT OR REPLACE INTO chat (id, name, text, ts) VALUES (?, ?, ?, ?)").run(msg.id, name, text, msg.ts);
+    db.prepare("DELETE FROM chat WHERE id NOT IN (SELECT id FROM chat ORDER BY ts DESC LIMIT 200)").run();
     io.emit("message", msg);
   });
 

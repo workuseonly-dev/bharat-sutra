@@ -53,6 +53,19 @@ function setup(io) {
   const MAX = 150;
   const listeners = [];
   const status = {};
+  const db = require("./db");
+  const ins = db.prepare("INSERT OR REPLACE INTO news (id, cat, title, url, source, kind, ts, summary, also) VALUES (?,?,?,?,?,?,?,?,?)");
+  const updAlso = db.prepare("UPDATE news SET also=? WHERE id=?");
+
+  // restore persisted items so dedupe + history survive restarts
+  for (const cat of Object.keys(items)) {
+    const rows = db.prepare("SELECT * FROM news WHERE cat=? ORDER BY ts DESC LIMIT ?").all(cat, MAX);
+    for (const r of rows.reverse()) {
+      seenKeys.add("u:" + canonUrl(r.url));
+      seenKeys.add("t:" + normTitle(r.title));
+      items[cat].unshift({ id: r.id, cat, title: r.title, url: r.url, source: r.source, kind: r.kind, ts: r.ts, summary: r.summary, also: JSON.parse(r.also || "[]"), _tk: tokens(r.title) });
+    }
+  }
 
   function ingest(cat, feed, it, live) {
     const title = strip(it.title).replace(/\s*\[[A-Z/\s]{2,12}\]\s*$/, "");
@@ -72,6 +85,7 @@ function setup(io) {
     if (near) {
       if (!near.also.some((a) => a.source === feed.name) && near.source !== feed.name) {
         near.also.push({ source: feed.name, url: link });
+        updAlso.run(JSON.stringify(near.also), near.id);
         if (live) nsp.emit("also", { cat, id: near.id, also: near.also });
       }
       return;
@@ -81,6 +95,7 @@ function setup(io) {
     const idx = list.findIndex((x) => x.ts < ts);
     list.splice(idx < 0 ? list.length : idx, 0, item);
     if (list.length > MAX) list.length = MAX;
+    ins.run(item.id, cat, item.title, item.url, item.source, item.kind, item.ts, item.summary, JSON.stringify(item.also));
     if (live) nsp.emit("item", pub(item));
     listeners.forEach((f) => f(pub(item), live));
   }
@@ -98,6 +113,7 @@ function setup(io) {
     for (const kind of ["top", "radar"])
       await Promise.all(Object.entries(CATEGORIES).flatMap(([cat, c]) => c.feeds.filter((f) => f.kind === kind).map((f) => pollFeed(cat, f, live))));
     nsp.emit("status", { updated: Date.now() });
+    db.prepare("DELETE FROM news WHERE ts < ?").run(Date.now() - 7 * 864e5);
   }
   let ready = false;
   pollAll(false).then(() => { ready = true; console.log("news ready", Object.fromEntries(Object.entries(items).map(([k, v]) => [k, v.length])), Object.entries(status).filter(([, v]) => v !== "ok")); setInterval(() => pollAll(true), 60000); });

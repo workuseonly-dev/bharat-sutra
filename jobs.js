@@ -106,6 +106,15 @@ function setup(io) {
   const notices = []; // newest first
   const seen = new Set();
   const MAX = 400, MAX_AGE = 60 * 864e5;
+  const db = require("./db");
+  const ins = db.prepare("INSERT OR REPLACE INTO notices (id, source, cat, type, title, url, ts, mp, summary, lastDate, examDate, startDate, vacancies, also) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+  const updAlso = db.prepare("UPDATE notices SET also=? WHERE id=?");
+
+  // restore persisted notices so dedupe + history survive restarts
+  for (const r of db.prepare("SELECT * FROM notices ORDER BY ts DESC LIMIT ?").all(MAX).reverse()) {
+    seen.add(norm(r.title)); seen.add(r.url);
+    notices.unshift({ id: r.id, source: r.source, cat: r.cat, type: r.type, title: r.title, url: r.url, ts: r.ts, mp: !!r.mp, summary: r.summary, lastDate: r.lastDate, examDate: r.examDate, startDate: r.startDate, vacancies: r.vacancies, also: JSON.parse(r.also || "[]"), _tk: tok(r.title) });
+  }
 
   function ingest(source, it, live) {
     const title = strip(it.title);
@@ -119,7 +128,7 @@ function setup(io) {
     const tk = tok(title);
     const near = tk.size >= 3 && notices.find((x) => Math.abs(x.ts - ts) < 14 * 864e5 && jac(tk, x._tk) >= 0.6);
     if (near) {
-      if (near.source !== source && !near.also.some((a) => a.source === source)) { near.also.push({ source, url: link }); if (live) nsp.emit("also", { id: near.id, also: near.also }); }
+      if (near.source !== source && !near.also.some((a) => a.source === source)) { near.also.push({ source, url: link }); updAlso.run(JSON.stringify(near.also), near.id); if (live) nsp.emit("also", { id: near.id, also: near.also }); }
       return;
     }
     const desc = strip(it.contentSnippet || it.summary || it.content);
@@ -130,6 +139,7 @@ function setup(io) {
     const idx = notices.findIndex((x) => x.ts < ts);
     notices.splice(idx < 0 ? notices.length : idx, 0, n);
     if (notices.length > MAX) notices.length = MAX;
+    ins.run(n.id, source, n.cat, n.type, n.title, n.url, n.ts, n.mp ? 1 : 0, n.summary, n.lastDate ?? null, n.examDate ?? null, n.startDate ?? null, n.vacancies ?? null, JSON.stringify(n.also));
     if (live) nsp.emit("notice", pub(n));
   }
   const pub = ({ _tk, ...r }) => r;
@@ -140,6 +150,7 @@ function setup(io) {
       catch (e) { console.error("jobs feed", name, String(e.message).slice(0, 60)); }
     }));
     nsp.emit("status", { updated: Date.now() });
+    db.prepare("DELETE FROM notices WHERE ts < ?").run(Date.now() - MAX_AGE * 2);
   }
   let ready = false;
   poll(false).then(() => { ready = true; console.log("jobs ready", notices.length); setInterval(() => poll(true), 5 * 60e3); });

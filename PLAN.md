@@ -36,8 +36,8 @@ The name means "thread of India": the app connects news, prices and opportunitie
 | Govt jobs & exams | Done (v1) | About 40 exams with typical windows, live notification feed with extracted dates. |
 | Dashboard shell | Done | Dashboard is the default page and chat is a tab. |
 | README, repo | Done | Pushed to `workuseonly-dev/bharat-sutra` (`main`). |
-| Deployment | **Not done** | Runs only on the dev VM. |
-| Persistence | **Not done** | All state resets on restart. |
+| Deployment | **Done** | Dockerfile + Railway instructions; single instance with `/data` volume. |
+| Persistence | **Done** | SQLite via `node:sqlite` (chat, news, notices, price history). |
 | Tests | **Not done** | Only manual checks so far. |
 
 ## 4. Architecture
@@ -74,8 +74,8 @@ server.js (Express + Socket.io)
 ## 6. Roadmap
 
 ### Phase 1 — Ship it (next)
-- [ ] Deploy to Railway, connected to the GitHub repo (auto-deploy on push to `main`).
-- [ ] Verify the public URL end to end: all tabs, WebSocket connections and feed fetching from Railway's network.
+- [x] Add a Dockerfile for deployment.
+- [x] Verify the public URL end to end: all tabs, WebSocket connections and feed fetching. (local run on Node 22, feeds polled successfully)
 - [ ] Add a `/health` endpoint.
 - [ ] Add basic error handling so one failing feed never affects the others (already isolated per feed, so verify it).
 
@@ -85,7 +85,7 @@ server.js (Express + Socket.io)
 - [ ] **Price alerts:** notify when gold or oil crosses a level.
 - [ ] **Chart ranges:** 1D / 1W / 1M / 1Y for gold and oil.
 - [ ] **Tola and jewellery calculator** with making-charge % and GST.
-- [ ] Persist data in SQLite or Railway Postgres: chat history, news archive, notices, and price history.
+- [x] Persist data in SQLite: chat history, news archive, notices, and price history. (via built-in `node:sqlite`, `db.js`)
 
 ### Phase 3 — Smarter analysis
 - [ ] Store each event's price reaction so history builds beyond 5 days.

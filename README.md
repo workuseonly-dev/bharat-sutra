@@ -20,11 +20,12 @@ npm install
 npm start          # http://localhost:8080
 ```
 
-Requires Node 18 or later (it uses the built-in `fetch`) and outbound internet access to the feeds and APIs below.
+Requires Node 22.13 or later (uses the built-in `fetch` and `node:sqlite`) and outbound internet access to the feeds and APIs below.
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `PORT` | `8080` | HTTP port |
+| `DATA_DIR` | `./data` | Where the SQLite database file lives |
 | `GOLD_IMPORT_DUTY` | `0.06` | Import duty used in the gold price estimate |
 | `GOLD_GST` | `0.03` | GST used in the gold price estimate |
 
@@ -34,6 +35,7 @@ No API keys are needed.
 
 ```
 server.js        Express + Socket.io bootstrap; wires the modules below
+db.js            SQLite persistence (node:sqlite): chat, news, notices, price history
 markets.js       Gold and oil: polls Yahoo Finance every 15 s (namespace /markets)
 news.js          RSS aggregator with de-duplication (namespace /news)
 impact.js        News -> market reaction analysis (namespace /impact)
@@ -65,11 +67,49 @@ Each feature has its own Socket.io namespace. The server sends an `init` or `upd
 
 ## Storage
 
-Everything is in memory. Chat history, news, notices and price history reset when the server restarts, and the feeds refill within a minute or two. For persistence, add a database such as SQLite or Railway Postgres.
+Chat history (last 50), news items, job notices and market price history are persisted to a SQLite database (`DATA_DIR/bharat-sutra.db`, via the built-in `node:sqlite`, no extra dependencies). Everything reloads on restart, so history survives restarts. Online user list is still runtime-only. Run a single instance: user state lives in process memory.
+
+## Running with Docker
+
+The `Dockerfile` is self-contained: it clones the repo from GitHub at build time, so you don't need a local checkout. It can also pull fresh code every time the container starts.
+
+```bash
+docker build -t bharat-sutra .
+docker run -d -p 8080:8080 -v bharat-sutra-data:/data --name bharat-sutra bharat-sutra
+```
+
+Useful options:
+
+| Option | Default | Purpose |
+|---|---|---|
+| `--build-arg REPO_URL=...` | this repo | Build from a fork or different remote |
+| `--build-arg BRANCH=...` | `main` | Build from a specific branch |
+| `-e DATA_DIR=/data` | `/data` | Where the SQLite database lives (mount a volume here) |
+| `-e PORT=8080` | `8080` | HTTP port |
+| `-e UPDATE_ON_START=1` | `0` | `git pull` latest code on every container start |
+
+The named volume keeps the database across container rebuilds.
+
+## Docker Hub image
+
+Every push to `main` builds and pushes the image via GitHub Actions (`.github/workflows/docker.yml`) to `<DOCKERHUB_USERNAME>/bharat-sutra:latest`. Add two repo secrets — `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (a Docker Hub access token) — under **Settings → Secrets and variables → Actions**.
+
+Once published, anyone can run it directly:
+
+```bash
+docker run -d -p 8080:8080 -v bharat-sutra-data:/data yourname/bharat-sutra:latest
+```
+
+Or build and push it yourself locally:
+
+```bash
+docker build -t yourname/bharat-sutra:latest .
+docker push yourname/bharat-sutra:latest
+```
 
 ## Deploying to Railway
 
-The app is a standard Node service with `npm start` as the start command. Railway sets `PORT` automatically. It needs no volumes or databases, and Socket.io works over Railway's default networking. Run a single instance, because chat and user state live in process memory.
+The app is a standard Node service with `npm start` as the start command. Railway sets `PORT` automatically. Add a volume mounted at `/data` and set `DATA_DIR=/data` to persist the database. Socket.io works over Railway's default networking. Run a single instance, because chat and user state live in process memory.
 
 ## Customising
 

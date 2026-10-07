@@ -20,6 +20,14 @@ function setup(io) {
   const nsp = io.of("/markets");
   const state = { gold: null, oil: null, updated: null, error: null };
   const hist = { gold: [], oil: [], brent: [] };
+  const db = require("./db");
+  const getKv = db.prepare("SELECT value FROM kv WHERE key=?");
+  const setKv = db.prepare("INSERT OR REPLACE INTO kv (key, value) VALUES ('markets_hist', ?)");
+  try {
+    const saved = getKv.get("markets_hist");
+    if (saved) Object.assign(hist, JSON.parse(saved.value));
+  } catch { /* ignore corrupt cache */ }
+  setInterval(() => { try { setKv.run(JSON.stringify(hist)); } catch {} }, 60000);
 
   async function tick(first) {
     try {
